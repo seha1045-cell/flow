@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -114,6 +115,10 @@ private fun Diagnostic(context: MainActivity) {
     var report by remember { mutableStateOf("Connect FLOW 8, then scan in both Streaming and Recording modes.") }
     var captureReport by remember { mutableStateOf("Audio test is optional. It records briefly for measurement only; nothing is saved.") }
     var busy by remember { mutableStateOf(false) }
+    val rtaScope = rememberCoroutineScope()
+    val spectrum by RtaCapture.spectrum.collectAsState()
+    val rtaRunning by RtaCapture.running.collectAsState()
+
     MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFF7DCBFF))) {
         Column(Modifier.fillMaxSize().background(Color(0xFF101923)).padding(16.dp)) {
             Text("FLOW 8 USB DIAGNOSTIC", style = MaterialTheme.typography.headlineSmall, color = Color.White)
@@ -138,6 +143,15 @@ private fun Diagnostic(context: MainActivity) {
             Spacer(Modifier.height(10.dp))
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 Text(captureReport, color = Color.White)
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = {
+                if (rtaRunning) RtaCapture.stop()
+                else RtaCapture.start(context, rtaScope)
+            }) {
+                Text(if (rtaRunning) "STOP RTA" else "START RTA")
+            }
+            RtaGraph(spectrum)
+
                 Spacer(Modifier.height(12.dp))
                 Text(report, color = Color.White)
             }
